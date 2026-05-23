@@ -3,7 +3,6 @@ import { Command } from 'commander';
 import { runPropagule } from './agents/propagule';
 import { runTide } from './agents/tide';
 import { runAnemophily } from './agents/anemophily';
-import { runHarness } from './agents/harness';
 import { logEvent } from './agents/heron';
 import { generateText } from './utils/llm';
 import { getMantisLogo } from './utils/logo';
@@ -66,19 +65,6 @@ program
     }
   });
 
-program
-  .command('review')
-  .description('Run Mantis Harness to review, validate, and auto-correct errors')
-  .action(async () => {
-    try {
-      const passed = await runHarness(process.cwd(), 'gemini', 'gemini-2.5-flash');
-      process.exit(passed ? 0 : 1);
-    } catch (error) {
-      console.error('Failed to run harness review:', error);
-      process.exit(1);
-    }
-  });
-
 // Handle unknown commands
 program.on('command:*', () => {
   console.error('Invalid command: %s\nSee --help for a list of available commands.', program.args.join(' '));
@@ -91,7 +77,6 @@ function startRepl() {
   console.log('Available commands:');
   console.log('  propagule             - code review, an expert sentinel that scans the codebase');
   console.log('  tide                  - an adversarial code quality reviewer running tests and linting');
-  console.log('  review                - orchestrate context scanning, code quality checks, and auto-fixes');
   console.log('  anemophily            - wind-driven agent that deploys the verified codebase');
   console.log('  model <gemini|claude|opus> [model_name] - Switch the active LLM provider and model');
   console.log('  ask <query>           - Call the active LLM wrapper and print response');
@@ -130,7 +115,6 @@ function startRepl() {
         console.log('\nAvailable commands:');
         console.log('  propagule             - code review, an expert sentinel that scans the codebase');
         console.log('  tide                  - an adversarial code quality reviewer running tests and linting');
-        console.log('  review                - orchestrate context scanning, code quality checks, and auto-fixes');
         console.log('  anemophily            - wind-driven agent that deploys the verified codebase');
         console.log('  model <gemini|claude|opus> [model_name] - Switch the active LLM provider and model');
         console.log('  ask <query>           - Call the active LLM wrapper and print response');
@@ -155,15 +139,6 @@ function startRepl() {
           await logEvent(process.cwd(), 'verify', passed ? 'Tide verification passed.' : 'Tide verification failed.');
         } catch (error: any) {
           console.error(chalk.red(`Error running tide: ${error.message}`));
-        }
-        break;
-
-      case 'review':
-        console.log(chalk.blue('Starting Harness review agent...'));
-        try {
-          await runHarness(process.cwd(), activeProvider, activeModel);
-        } catch (error: any) {
-          console.error(chalk.red(`Error running harness review: ${error.message}`));
         }
         break;
 
