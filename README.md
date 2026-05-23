@@ -2,8 +2,6 @@
 
 Mantis CLI is a local, agent-driven software development loop that orchestrates context scanning, validation testing, self-healing code correction, deployment, and documentation logging.
 
-Featuring custom 8-bit ANSI terminal rendering matching the brand colors from `cli.png` and deep context awareness, Mantis acts as the quality gate keeper for your local workspace.
-
 ---
 
 ## Ecosistema de Agentes y Comandos
