@@ -4,7 +4,7 @@ import { runPropagule } from './agents/propagule';
 import { runTide } from './agents/tide';
 import { runAnemophily } from './agents/anemophily';
 import { logEvent } from './agents/heron';
-import { generateText } from './utils/llm';
+
 import { getMantisLogo } from './utils/logo';
 import * as dotenv from 'dotenv';
 import * as readline from 'readline';
@@ -78,13 +78,8 @@ function startRepl() {
   console.log('  propagule             - code review, an expert sentinel that scans the codebase');
   console.log('  tide                  - an adversarial code quality reviewer running tests and linting');
   console.log('  anemophily            - wind-driven agent that deploys the verified codebase');
-  console.log('  model <gemini|claude|opus> [model_name] - Switch the active LLM provider and model');
-  console.log('  ask <query>           - Call the active LLM wrapper and print response');
   console.log('  exit / quit           - Exit interactive REPL');
   console.log('  help                  - Show this help menu\n');
-
-  let activeProvider: 'gemini' | 'anthropic' = 'gemini';
-  let activeModel = 'gemini-2.5-flash';
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -116,8 +111,6 @@ function startRepl() {
         console.log('  propagule             - code review, an expert sentinel that scans the codebase');
         console.log('  tide                  - an adversarial code quality reviewer running tests and linting');
         console.log('  anemophily            - wind-driven agent that deploys the verified codebase');
-        console.log('  model <gemini|claude|opus> [model_name] - Switch the active LLM provider and model');
-        console.log('  ask <query>           - Call the active LLM wrapper and print response');
         console.log('  exit / quit           - Exit interactive REPL');
         console.log('  help                  - Show this help menu\n');
         break;
@@ -151,51 +144,7 @@ function startRepl() {
         }
         break;
 
-      case 'model': {
-        if (!argsString) {
-          console.log(chalk.yellow('Usage: model <gemini|claude|opus> [model_name]'));
-          console.log(`Current model: ${activeProvider} (${activeModel})`);
-          break;
-        }
-        const parts = argsString.split(/\s+/);
-        const providerInput = parts[0].toLowerCase();
-        const modelInput = parts[1];
 
-        if (providerInput.startsWith('gemini')) {
-          activeProvider = 'gemini';
-          activeModel = modelInput || 'gemini-2.5-flash';
-          console.log(chalk.green(`Switched LLM provider to Gemini (model: ${activeModel})`));
-        } else if (providerInput === 'opus') {
-          activeProvider = 'anthropic';
-          activeModel = 'claude-3-opus-20240229';
-          console.log(chalk.green(`Switched LLM provider to Anthropic (model: ${activeModel})`));
-        } else if (providerInput.startsWith('claude') || providerInput.startsWith('anthropic')) {
-          activeProvider = 'anthropic';
-          activeModel = modelInput || 'claude-3-5-sonnet-20240620';
-          console.log(chalk.green(`Switched LLM provider to Anthropic (model: ${activeModel})`));
-        } else {
-          console.log(chalk.yellow('Unsupported provider. Supported: gemini, claude, opus'));
-        }
-        break;
-      }
-
-      case 'ask': {
-        if (!argsString) {
-          console.log(chalk.yellow('Error: Please provide a query. Usage: ask <query>'));
-          break;
-        }
-        console.log(chalk.blue(`Querying ${activeProvider} (${activeModel})...`));
-        try {
-          const sysInstruction = buildSystemInstruction(process.cwd());
-          const response = await generateText(activeProvider, activeModel, argsString, sysInstruction);
-          console.log(chalk.bold.green('\nResponse:'));
-          console.log(chalk.white(response));
-          console.log();
-        } catch (error: any) {
-          console.error(chalk.red(`\nGeneration failed: ${error.message}`));
-        }
-        break;
-      }
 
       default:
         console.log(chalk.yellow(`Unknown command: "${cmd}". Type "help" for instructions.`));
@@ -211,58 +160,7 @@ function startRepl() {
   });
 }
 
-function buildSystemInstruction(cwd: string): string {
-  let contextInfo = 'No project context initialized yet. Run "propagule" inside the project to scan.';
-  const contextPath = path.join(cwd, '.mantis', 'context.json');
-  if (fs.existsSync(contextPath)) {
-    try {
-      const raw = fs.readFileSync(contextPath, 'utf8');
-      const context = JSON.parse(raw);
-      contextInfo = `
-Active Project Context:
-- Languages: ${context.languages?.join(', ') || 'unknown'}
-- Frameworks: ${context.frameworks?.join(', ') || 'unknown'}
-- Test Command: ${context.testCommand || 'none'}
-- Git Convention: ${context.gitCommitConvention || 'unknown'}
-`;
-    } catch (e) {
-      // ignore
-    }
-  }
 
-  let dailyNoteContent = 'No recent daily notes found.';
-  if (process.env.OBSIDIAN_VAULT_PATH) {
-    try {
-      const dailyDir = path.join(process.env.OBSIDIAN_VAULT_PATH, 'Daily');
-      if (fs.existsSync(dailyDir)) {
-        const files = fs.readdirSync(dailyDir)
-          .filter(f => f.endsWith('.md'))
-          .sort()
-          .reverse(); // Newest first
-        if (files.length > 0) {
-          const newestFile = path.join(dailyDir, files[0]);
-          const content = fs.readFileSync(newestFile, 'utf8');
-          dailyNoteContent = `Recent activities from Obsidian daily note (${files[0]}):\n${content}`;
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  const vaultPath = process.env.OBSIDIAN_VAULT_PATH || 'Not configured';
-
-  return `You are Mantis, an AI-powered agentic developer assistant integrated as a CLI.
-You are running locally in the terminal.
-
-${contextInfo}
-Obsidian Vault Path: ${vaultPath}
-Current directory: ${cwd}
-
-${dailyNoteContent}
-
-Provide answers tailored to the active project context, languages, frameworks, recent notes, and workflows. Be highly technical, precise, and concise. Avoid conversational filler.`;
-}
 
 if (process.argv.length > 2) {
   program.parse(process.argv);

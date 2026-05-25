@@ -18,8 +18,6 @@ Ejecutando `mantis` sin argumentos entras a la REPL interactiva, la cual soporta
 * `propagule` — Inicia el escaneo.
 * `tide` — Corre verificaciones.
 * `anemophily` — Despliega la rama.
-* `model <gemini|claude|opus> [model_name]` — Cambia dinámicamente el proveedor de LLM y el modelo (ej. `model gemini gemini-3.5-flash`).
-* `ask <query>` — Realiza consultas con contexto inyectado automáticamente (incluye el contexto del proyecto de `.mantis/context.json` y la bitácora más reciente de Obsidian).
 * `exit` / `quit` — Salir de la terminal.
 
 ---
@@ -33,8 +31,6 @@ Mantis busca el archivo `.env` de manera jerárquica para permitir configuracion
 
 Debe contener:
 ```env
-GEMINI_API_KEY=tu_clave_gemini
-ANTHROPIC_API_KEY=tu_clave_anthropic
 OBSIDIAN_VAULT_PATH=C:\Ruta\A\Tu\SecondBrain
 ```
 
